@@ -1,0 +1,22 @@
+flowchart LR
+    Internet[Internet]
+
+    subgraph VPC["VPC vpc-quantum-staging-scrum1"]
+        Subnet["Subnet<br/>subnet-quantum-staging-scrum1-api<br/>10.10.0.0/20"]
+        Firewall["Firewall<br/>fw-quantum-staging-scrum1-http-https"]
+        VM["Compute Engine VM<br/>quantum-staging-scrum1-api-01<br/>e2-small"]
+        VM -- "in" --> Subnet
+    end
+
+    subgraph Storage["Cloud Storage"]
+        Bucket["Cloud Storage Bucket<br/>quantum-staging-scrum1-uploads"]
+    end
+
+    subgraph IAM["IAM"]
+        SA["Service Account<br/>sa-quantum-staging-scrum1-api"]
+    end
+
+    Internet -->|"TCP 80, 443"| Firewall
+    Firewall --> VM
+    VM -.->|"runs as"| SA
+    SA -.->|"roles/storage.objectAdmin"| Bucket
