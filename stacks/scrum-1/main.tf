@@ -76,10 +76,11 @@ resource "google_compute_subnetwork" "scrum1_subnet_api" {
 }
 
 # Firewall Rule for HTTP/HTTPS inbound
+# Adhering to "no 0.0.0.0/0 ingress" and assuming internal traffic for a VM without external IP.
 resource "google_compute_firewall" "scrum1_fw_http_https" {
-  name    = "fw-quantum-${var.environment}-scrum1-http-https"
-  project = var.project_id
-  network = google_compute_network.scrum1_vpc.id
+  name      = "fw-quantum-${var.environment}-scrum1-http-https"
+  project   = var.project_id
+  network   = google_compute_network.scrum1_vpc.id
   direction = "INGRESS"
 
   allow {
@@ -87,7 +88,8 @@ resource "google_compute_firewall" "scrum1_fw_http_https" {
     ports    = ["80", "443"]
   }
 
-  source_ranges = ["0.0.0.0/0"] # Required for public web traffic
+  # Standard: "no 0.0.0.0/0 ingress". Allowing traffic from within the subnet.
+  source_ranges = [google_compute_subnetwork.scrum1_subnet_api.ip_cidr_range]
   target_tags   = ["scrum1-api"] # Tag for the VM
 }
 
@@ -102,7 +104,8 @@ resource "random_id" "bucket_suffix" {
 resource "google_storage_bucket" "scrum1_uploads_bucket" {
   name                        = "quantum-${var.environment}-scrum1-uploads-${random_id.bucket_suffix.hex}"
   project                     = var.project_id
-  location                    = "US"                       # Standard default
+  # Standard: location = var.region (regional), not multi-region "US"
+  location                    = var.region
   uniform_bucket_level_access = true                       # Standard default
   public_access_prevention    = "enforced"                 # Standard default
   force_destroy               = false                      # Standard default
@@ -122,7 +125,7 @@ resource "google_service_account" "scrum1_api_sa" {
 # IAM binding for the service account to the bucket
 resource "google_storage_bucket_iam_member" "scrum1_bucket_iam" {
   bucket = google_storage_bucket.scrum1_uploads_bucket.name
-  role   = "roles/storage.objectAdmin" # Least privilege for file uploads
+  role   = "roles/storage.objectAdmin" # Least privilege for file uploads (allows managing objects)
   member = "serviceAccount:${google_service_account.scrum1_api_sa.email}"
 }
 
@@ -145,13 +148,13 @@ resource "google_compute_instance" "scrum1_api_vm" {
   network_interface {
     network    = google_compute_network.scrum1_vpc.id
     subnetwork = google_compute_subnetwork.scrum1_subnet_api.id
-    # No external IP as per standard unless required, and it's not required here.
+    # Standard: No external IP (no access_config block)
   }
 
   service_account {
     email  = google_service_account.scrum1_api_sa.email
-    scopes = ["cloud-platform"] # Required for service account to function, even with specific IAM roles.
-                                # The IAM role on the bucket is the primary control for least privilege.
+    # Standard: Least privilege. Changed from "cloud-platform" to specific storage scope.
+    scopes = ["https://www.googleapis.com/auth/devstorage.read_write"]
   }
 
   tags = ["scrum1-api"] # For firewall rule targeting
