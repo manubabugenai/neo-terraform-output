@@ -59,12 +59,12 @@ resource "google_storage_bucket" "it1_internal_docs_bucket" {
   # Naming standard: quantum-<env>-<purpose>-<unique-suffix>
   name          = "quantum-${var.environment}-it1-internal-docs-${random_id.it1_bucket_suffix.hex}"
   project       = var.project_id
-  location      = var.region # Defaults to us-central1 as per standard
-  storage_class = "STANDARD" # Default for general purpose storage
+  location      = var.region # Defaults to us-central1 as per standard and requirement
+  storage_class = "STANDARD" # Default for general purpose storage, suitable for expected size/users
 
   # Resource default: uniform_bucket_level_access = true
   uniform_bucket_level_access = true
-  # Resource default: public_access_prevention = "enforced"
+  # Resource default: public_access_prevention = "enforced" (also meets requirement)
   public_access_prevention = "enforced"
   # Resource default: force_destroy = false
   force_destroy = false
