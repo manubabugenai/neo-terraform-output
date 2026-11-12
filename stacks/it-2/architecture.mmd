@@ -1,0 +1,7 @@
+flowchart LR
+  subgraph PubSub["Google Cloud Pub/Sub"]
+    Topic["Pub/Sub Topic<br/>quantum-dev-it2-app-notifications<br/>Message Retention: 7 days"]
+    Subscription["Pub/Sub Subscription<br/>quantum-dev-it2-app-notifications-sub<br/>Pull Delivery<br/>Message Retention: 7 days"]
+  end
+
+  Subscription -->|Subscribes to| Topic
