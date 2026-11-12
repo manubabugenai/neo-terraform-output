@@ -1,0 +1,6 @@
+flowchart LR
+  subgraph Messaging
+    Topic["Pub/Sub Topic<br/>quantum-dev-it2-app-events"]
+    Subscription["Pub/Sub Subscription<br/>quantum-dev-it2-app-events-sub"]
+  end
+  Subscription --> Topic
